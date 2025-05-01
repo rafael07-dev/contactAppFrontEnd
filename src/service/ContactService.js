@@ -13,6 +13,11 @@ export async function addContact(contact) {
     return axios.post(API_URl, contact)
 }
 
+export async function delContact(id) {
+    
+    return axios.delete(`${API_URl}/${id}`)
+}
+
 export async function getContactNumber() {
     const res = await axios.get(API_URl);
     return res.data.length;
