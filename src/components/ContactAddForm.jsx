@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useContact } from "../hooks/useContact";
 import { useState } from "react";
+import { ToastContainer } from "react-toastify";
 
 export default function ContactAddForm() {
 
@@ -14,7 +15,12 @@ export default function ContactAddForm() {
         "photoUrl": ""
     });
 
-    const {addContact, setFile} = useContact();
+    const {saveContact, setFile} = useContact();
+
+    const onSubmit = (e)=>{
+        e.preventDefault();
+        saveContact(contact);
+    }
 
     const onChange = (e) => {
         setContact({ ...contact, [e.target.name]: e.target.value })
@@ -30,7 +36,7 @@ export default function ContactAddForm() {
                 {/* Formulario de edición */}
                 <div className="w-full max-w-md p-8 rounded-lg shadow-lg bg-gray-200">
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">Agregar Contacto</h2>
-                    <form onSubmit={(e) => addContact(contact, e)}>
+                    <form onSubmit={onSubmit}>
                         {/* Input oculto para el ID de contacto */}
                         <input type="hidden" />
 
@@ -113,7 +119,6 @@ export default function ContactAddForm() {
                                 Guardar
                             </button>
                         </div>
-
                     </form>
                 </div>
             </div>
