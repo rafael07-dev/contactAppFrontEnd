@@ -1,9 +1,8 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { updateContactApi, updateImage } from "../service/ContactService";
-import { getContacts } from "../service/ContactService";
-import { getContactById } from "../service/ContactService";
+import { updateContactApi, updateImage, addContact, delContact, 
+    getContactById, getContacts } from "../service/ContactService";
 
 export const ContactContext = createContext();
 
@@ -12,15 +11,19 @@ export function ContactProvider({ children }) {
     //estado global de contactos
     const [contacts, setContacts] = useState([]);
     const [file, setFile] = useState(undefined)
+    const [pageIndex, setPageIndex] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
     const navigate = useNavigate();
 
-    const fetchContacts = async (pageIndex = 1, pageSize = 10) => {
+    const fetchContacts = async (pageIndex, pageSize = 10) => {
         try {
 
             const res = await getContacts(pageIndex, pageSize);
 
             setContacts(res.data.data.items)
+            setTotalPages(res.data.data.totalPages)
+            setPageIndex(pageIndex)
 
         } catch (error) {
             console.log(error.message);
@@ -28,15 +31,20 @@ export function ContactProvider({ children }) {
     }
 
     const fetchContactById = async (id) => {
-        const res = await getContactById(id)
-        const data = res.data;
-        console.log(data);
-        
-        return data
+        try{
+
+            const res = await getContactById(id)
+            const data = res.data;
+            console.log(data);
+            
+            return data
+        }catch(error){
+            console.log(error.message);
+        }
     }
 
-    const addContact = async (contact, event) => {
-        event.preventDefault();
+    const saveContact = async (contact) => {
+
         try {
             const { data } = await addContact(contact);
 
@@ -59,10 +67,26 @@ export function ContactProvider({ children }) {
     }
 
     const updateContact = async (contact) => {
-        await updateContactApi(contact)
-        const res = await fetchContactById(contact.id)
-        toast.success("Contacto actualizado correctamente!");
-        console.log(res);
+        try{
+            await updateContactApi(contact)
+            const res = await fetchContactById(contact.id)
+            toast.success("Contacto actualizado correctamente!");
+            console.log(res);
+        }catch(error){
+            console.log(error.message);
+            toast.error(error.message)
+        }
+    }
+
+    const deleteContact = async (id) => {
+        try{
+            await delContact(id)
+            //const res = await fetchContactById(id)
+            toast.success("Contacto eliminado correctamente!");
+        }catch(error){
+            console.log(error.message);
+            toast.error(error.message)
+        }
     }
 
     const updatePhoto = async (file, id) => {
@@ -74,17 +98,24 @@ export function ContactProvider({ children }) {
         formData.append('file', file, file.name);
         formData.append('id', id);
 
-        const res = await updateImage(formData);
-        //fetchContactById(id)
-        
-        toast.success("Foto actualizada correctamente");
+        try{
+            const res = await updateImage(formData);
+            //fetchContactById(id)
+            
+            toast.success("Foto actualizada correctamente");
+    
+            return res.data
+        }catch(e){
+            console.log(e.message);
+        }
 
-        return res.data
     }
 
-    useEffect(() => {
+    /*useEffect(() => {
+        console.log("soy el effect del provider");
+        
         fetchContacts()
-    }, [])
+    }, [])*/
 
     return (
         <ContactContext.Provider
@@ -93,11 +124,15 @@ export function ContactProvider({ children }) {
                 setContacts,
                 fetchContacts,
                 fetchContactById,
-                addContact,
+                saveContact,
                 updateContact,
                 updatePhoto,
+                deleteContact,
                 getContactById,
-                setFile
+                setFile,
+                pageIndex,
+                totalPages,
+                setPageIndex
             }}
         >
             {children}
